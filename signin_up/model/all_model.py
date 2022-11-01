@@ -22,7 +22,8 @@ def getID():
 
 
 def initDatabaseConnection():
-    connect(host='mongodb://127.0.0.1:27017/CardUp')
+    connect(db="CardUp", host="54.202.248.205", port=27017, username="saurabh", password="Imsaurabh@1",
+            authentication_source="admin")
 
 
 class Gender(Enum):
