@@ -1,8 +1,14 @@
+import os
+import sys
+
 from flask import Flask, request
-from signin_up.views.email_submit import EmailSubmit
-from signin_up.views.mobile_submit import MobileSubmit
-from signin_up.model.all_model import initDatabaseConnection, User
-from signin_up.views.session_id_generator import SessionId
+from views.email_submit import EmailSubmit
+from views.mobile_submit import MobileSubmit
+from model.all_model import initDatabaseConnection, User
+from views.session_id_generator import SessionId
+from views.email_verification import EmailVerification
+from views.mobile_verification import MobileVerification
+
 
 app = Flask(__name__)
 initDatabaseConnection()
@@ -35,7 +41,9 @@ def email_submission():
 
 @app.route("/email/verification", methods=["POST"])
 def email_verification():
-    pass
+    req_payload = request.get_json(force=True)
+    process = EmailVerification(payload=req_payload)
+    return process.response
 
 
 @app.route("/mobile/submission", methods=["POST"])
@@ -47,8 +55,10 @@ def mobile_submission():
 
 @app.route("/mobile/verification", methods=["POST"])
 def mobile_verification():
-    pass
+    req_payload = request.get_json(force=True)
+    process = MobileVerification(payload=req_payload)
+    return process.response
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=4200, debug=False)
+    app.run(host="192.168.1.162", port=4200, debug=True)

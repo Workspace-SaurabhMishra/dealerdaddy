@@ -1,24 +1,18 @@
 import json
-import os
-import random
-import string
-import sys
 import typing
 
-import plivo
 import redis
-
 from flask import Response
-from marshmallow import Schema, fields, utils
+from marshmallow import fields, Schema, utils
 
 from model.all_model import User
 
 
-def mobile_payload_validator(function):
+def mobile_verification_validator(function):
     def wrapper(*args, **kwargs):
         self = args[0]
         try:
-            MobileRequestSchema().load(self.payload)
+            MobileVerificationSchema().load(self.payload)
         except Exception as e:
             self.response = Response(json.dumps("{0}".format(e)),
                                      status=400,
@@ -75,42 +69,45 @@ class CustomStringField(fields.String):
             raise self.make_error("invalid_utf8") from error
 
 
-class MobileRequestSchema(Schema):
+class MobileVerificationSchema(Schema):
     session_id = CustomStringField(required=True)
-    mobile_number = CustomStringField(required=True)
+    phone_number = CustomStringField(required=True)
+    otp = CustomStringField(required=True)
     # Todo: Do something about empty string
 
 
-class MobileSubmit:
+class MobileVerification:
     def __init__(self, payload):
-        self.redis_instance = None
         self.session_user = None
-        self.create_message = None
+        self.redis_result = None
+        self.redis_instance = None
         self.payload = payload
-        self.phone_number = payload.get('mobile_number')
-        self.session_id = payload.get('session_id')
-        self.otp = ''.join(random.choices(string.digits, k=4))
-        self.response = Response(json.dumps({"response": "Something went wrong"}), status=500,
-                                 mimetype="application/json")
+        self.otp = payload.get("otp")
+        self.phone_number = payload.get("phone_number")
+        self.session_id = payload.get("session_id")
+        self.response = self.response = Response(json.dumps({"response": "something went wrong"}), status=500,
+                                                 mimetype="application/json")
+
         self.engine()
 
     @error_control
-    @mobile_payload_validator
+    @mobile_verification_validator
     @duplicate_user
     def engine(self):
-        self.send_sms()
         self.init_redis()
-        self.persist_phone_otp()
+        self.persist_phone_number()
 
     def init_redis(self):
         self.redis_instance = redis.Redis(host="127.0.0.1", port=6379, db=0)
 
-    def persist_phone_otp(self):
-        self.redis_instance.set(f"{self.phone_number}",f"{self.otp}")
-
-    def send_sms(self):
-        client = plivo.RestClient(auth_id='MAZJNKOGM5ZDM0OTIWNW', auth_token='OGMwNGE3ZDE4NDczZjk3NzhmOTUzYzBmZTg5NWZl')
-        self.create_message = client.messages.create(src="+916393363690", dst=f"{self.phone_number}",
-                                                     text=f"Use {self.otp} for DealerDaddy signup")
-        self.response = Response(json.dumps({"response": "otp sent"}), status=200,
-                                 mimetype="application/json")
+    def persist_phone_number(self):
+        self.redis_result = self.redis_instance.get(f"{self.phone_number}")
+        if self.redis_result.decode() == self.otp:
+            self.session_user = User.objects(user_id=self.session_id)[0]
+            self.session_user["phone_number"] = self.phone_number
+            self.session_user.save()
+            self.response = Response(json.dumps({"response": "otp verified"}), status=200,
+                                     mimetype="application/json")
+        else:
+            self.response = Response(json.dumps({"response": "wrong otp"}), status=401,
+                                     mimetype="application/json")

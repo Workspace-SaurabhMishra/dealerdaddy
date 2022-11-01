@@ -4,7 +4,7 @@ import random
 import string
 from flask import Response
 import redis
-from signin_up.model.all_model import User
+from model.all_model import User
 
 
 def error_control(function):
