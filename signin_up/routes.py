@@ -4,14 +4,14 @@ import sys
 from flask import Flask, request
 from views.email_submit import EmailSubmit
 from views.mobile_submit import MobileSubmit
-from model.all_model import initDatabaseConnection, User
+from model.all_model import init_database_connection, User
 from views.session_id_generator import SessionId
 from views.email_verification import EmailVerification
 from views.mobile_verification import MobileVerification
 
 
 app = Flask(__name__)
-initDatabaseConnection()
+init_database_connection()
 
 
 # Todo: Think about if request is from app and there is issue within the request(e.g. method=GET)
@@ -61,4 +61,13 @@ def mobile_verification():
 
 
 if __name__ == "__main__":
-    app.run(host="192.168.1.162", port=4200, debug=True)
+    host = str(input("Choose Server Ip"))
+    if host == "1":
+        host = "127.0.0.1"
+    elif host == "2":
+        host = "192.168.1.162"
+    elif host == "3":
+        host = "0.0.0.0"
+    host = "0.0.0.0"
+
+    app.run(host=host, port=4200, debug=True)

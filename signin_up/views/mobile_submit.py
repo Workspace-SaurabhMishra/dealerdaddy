@@ -11,7 +11,7 @@ import redis
 from flask import Response
 from marshmallow import Schema, fields, utils
 
-from model.all_model import User
+from model.all_model import User, redis_instance
 
 
 def mobile_payload_validator(function):
@@ -45,7 +45,7 @@ def error_control(function):
 def duplicate_user(function):
     def wrapper(*args, **kwargs):
         self = args[0]
-        self.session_user = User.objects(user_id=self.session_id)
+        self.session_user = redis_instance.get(self.session_id)
         if len(self.session_user) == 0:
             self.response = Response(json.dumps({"response": "invalid process"}), status=400,
                                      mimetype="application/json")
@@ -83,7 +83,6 @@ class MobileRequestSchema(Schema):
 
 class MobileSubmit:
     def __init__(self, payload):
-        self.redis_instance = None
         self.session_user = None
         self.create_message = None
         self.payload = payload
@@ -99,14 +98,10 @@ class MobileSubmit:
     @duplicate_user
     def engine(self):
         self.send_sms()
-        self.init_redis()
         self.persist_phone_otp()
 
-    def init_redis(self):
-        self.redis_instance = redis.Redis(host="127.0.0.1", port=6379, db=0)
-
     def persist_phone_otp(self):
-        self.redis_instance.set(f"{self.phone_number}",f"{self.otp}")
+        redis_instance.set(f"{self.phone_number}",f"{self.otp}")
 
     def send_sms(self):
         client = plivo.RestClient(auth_id='MAZJNKOGM5ZDM0OTIWNW', auth_token='OGMwNGE3ZDE4NDczZjk3NzhmOTUzYzBmZTg5NWZl')

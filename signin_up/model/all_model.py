@@ -1,6 +1,7 @@
 import datetime
 from enum import Enum
 
+import redis
 from mongoengine import *
 import string
 import random
@@ -21,7 +22,17 @@ def getID():
     return temp
 
 
-def initDatabaseConnection():
+class RedisInstance:
+    redis_instance = None
+
+    def __init__(self):
+        self.redis_instance = redis.Redis(host="127.0.0.1", port=6379, db=0)
+
+
+redis_instance = RedisInstance().redis_instance
+
+
+def init_database_connection():
     connect(db="CardUp", host="54.202.248.205", port=27017, username="saurabh", password="Imsaurabh@1",
             authentication_source="admin")
 

@@ -1,11 +1,13 @@
 import json
 import typing
+from datetime import datetime
 
 import redis
 from flask import Response
 from marshmallow import Schema, fields, utils
 
-from model.all_model import User
+from model.all_model import User, redis_instance
+
 
 def email_payload_validator(function):
     def wrapper(*args, **kwargs):
@@ -39,7 +41,8 @@ def error_control(function):
 def duplicate_user(function):
     def wrapper(*args, **kwargs):
         self = args[0]
-        self.session_user = User.objects(user_id=self.session_id)
+        self.session_user = redis_instance.get(self.session_id)
+        print(self.session_user)
         if len(self.session_user) == 0:
             self.response = Response(json.dumps({"response": "invalid process"}), status=400,
                                      mimetype="application/json")
@@ -80,7 +83,6 @@ class EmailVerification:
     def __init__(self, payload):
         self.session_user = None
         self.redis_result = None
-        self.redis_instance = None
         self.payload = payload
         self.otp = payload.get("otp")
         self.email = payload.get("email")
@@ -94,16 +96,12 @@ class EmailVerification:
     @email_payload_validator
     @duplicate_user
     def engine(self):
-        self.init_redis()
         self.persist_email()
 
-    def init_redis(self):
-        self.redis_instance = redis.Redis(host="127.0.0.1", port=6379, db=0)
-
     def persist_email(self):
-        self.redis_result = self.redis_instance.get(f"{self.email}")
+        self.redis_result = redis_instance.get(f"{self.email}")
         if self.redis_result.decode() == self.otp:
-            self.session_user = User.objects(user_id=self.session_id)[0]
+            self.session_user = User(user_id="U__" + self.session_id, user_timestamp=datetime.utcnow())
             self.session_user["email"] = self.email
             self.session_user.save()
             self.response = Response(json.dumps({"response": "otp verified"}), status=200,

@@ -1,22 +1,17 @@
 import json
-import os
 import smtplib
 import random
 import string
-import sys
 import typing
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
-current = os.path.dirname(os.path.realpath(__file__))
-parent = os.path.dirname(current)
-sys.path.append(parent)
 
 import redis
 from flask import Response
 from marshmallow import Schema, fields, validate, utils
 
-from model.all_model import User
+from model.all_model import User, redis_instance
+
 
 def email_payload_validator(function):
     def wrapper(*args, **kwargs):
@@ -50,7 +45,8 @@ def error_control(function):
 def duplicate_user(function):
     def wrapper(*args, **kwargs):
         self = args[0]
-        self.session_user = User.objects(user_id=self.session_id)
+        self.session_user = redis_instance.get(self.session_id)
+        print(self.session_user)
         if len(self.session_user) == 0:
             self.response = Response(json.dumps({"response": "invalid process"}), status=400,
                                      mimetype="application/json")
@@ -88,7 +84,6 @@ class EmailRequestSchema(Schema):
 
 class EmailSubmit:
     def __init__(self, payload):
-        self.redis_instance = None
         self.session_user = None
         self.payload = payload
         self.email = payload.get('email')
@@ -103,14 +98,10 @@ class EmailSubmit:
     @duplicate_user
     def engine(self):
         self.send_email()
-        self.init_redis()
         self.persist_email_otp()
 
-    def init_redis(self):
-        self.redis_instance = redis.Redis(host="127.0.0.1", port=6379, db=0)
-
     def persist_email_otp(self):
-        self.redis_instance.set(f"{self.email}",f"{self.otp}")
+        redis_instance.set(f"{self.email}", f"{self.otp}")
 
     def send_email(self):
         sender_email = "contact@dealerdaddy.in"
