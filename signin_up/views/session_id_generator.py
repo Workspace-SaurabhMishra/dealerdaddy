@@ -39,6 +39,6 @@ class SessionId:
         # new_user.save()
         self.sessionId = ''.join(random.choices(string.ascii_lowercase +
                                                 string.digits, k=14))
-        redis_instance.set(str(self.sessionId), str(datetime.datetime.utcnow()))
+        redis_instance.setex(str(self.sessionId),300 ,str(datetime.datetime.utcnow()))
         self.response = Response(json.dumps({"response": f"{self.sessionId}"}), status=200,
                                  mimetype="application/json")

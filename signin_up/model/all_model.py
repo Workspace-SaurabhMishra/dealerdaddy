@@ -16,17 +16,17 @@ import random
 #     - Payee Credentials
 
 
-def getID():
-    temp = ''.join(random.choices(string.ascii_lowercase +
-                                  string.digits, k=14))
-    return temp
+def get_id():
+    _id = ''.join(random.choices(string.ascii_lowercase +
+                                 string.digits, k=14))
+    return _id
 
 
 class RedisInstance:
     redis_instance = None
 
     def __init__(self):
-        self.redis_instance = redis.Redis(host="127.0.0.1", port=6379, db=0)
+        self.redis_instance = redis.Redis(host="127.0.0.1", port=6379, db=0)  # TOdo: set keys for some time
 
 
 redis_instance = RedisInstance().redis_instance
@@ -67,7 +67,7 @@ class User(Document):
 
 class Purchase(Document):
     user_id = StringField(required=True, max_length=100)
-    purchase_id = StringField(required=False, default="P__" + getID())
+    purchase_id = StringField(required=False, default="P__" + get_id())
     machine_id = StringField(required=True, max_length=32)
     amount = IntField(required=True)
     self_profit = IntField(required=True)
@@ -87,7 +87,7 @@ class UserCredential(Document):
 
 
 class Activity(Document):
-    activity_id = StringField(required=False, default="A__" + getID())
+    activity_id = StringField(required=False, default="A__" + get_id())
     type = EnumField(required=True, enum=ActivityOptions)
     remark = GeoJsonBaseField(required=True)
     timestamp = DateTimeField(default=datetime.datetime.utcnow())

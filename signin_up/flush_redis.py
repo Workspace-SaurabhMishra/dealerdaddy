@@ -4,4 +4,4 @@ x = redis_instance
 
 for i in redis_instance.keys(pattern="*"):
     print(i)
-    redis_instance.delete(i)
+    # redis_instance.delete(i)

@@ -88,7 +88,8 @@ class MobileSubmit:
         self.payload = payload
         self.phone_number = payload.get('mobile_number')
         self.session_id = payload.get('session_id')
-        self.otp = ''.join(random.choices(string.digits, k=4))
+        # self.otp = ''.join(random.choices(string.digits, k=4))
+        self.otp = "1234"
         self.response = Response(json.dumps({"response": "Something went wrong"}), status=500,
                                  mimetype="application/json")
         self.engine()
@@ -97,11 +98,11 @@ class MobileSubmit:
     @mobile_payload_validator
     @duplicate_user
     def engine(self):
-        self.send_sms()
+        # self.send_sms()
         self.persist_phone_otp()
 
     def persist_phone_otp(self):
-        redis_instance.set(f"{self.phone_number}",f"{self.otp}")
+        redis_instance.set(f"{self.phone_number}", f"{self.otp}")
 
     def send_sms(self):
         client = plivo.RestClient(auth_id='MAZJNKOGM5ZDM0OTIWNW', auth_token='OGMwNGE3ZDE4NDczZjk3NzhmOTUzYzBmZTg5NWZl')

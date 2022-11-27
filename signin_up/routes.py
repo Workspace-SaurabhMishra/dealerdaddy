@@ -61,13 +61,5 @@ def mobile_verification():
 
 
 if __name__ == "__main__":
-    host = str(input("Choose Server Ip"))
-    if host == "1":
-        host = "127.0.0.1"
-    elif host == "2":
-        host = "192.168.1.162"
-    elif host == "3":
-        host = "0.0.0.0"
     host = "0.0.0.0"
-
     app.run(host=host, port=4200, debug=True)
