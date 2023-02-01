@@ -11,10 +11,10 @@ import redis
 from flask import Response
 from marshmallow import Schema, fields, utils
 
-from signin_up.model.all_model import User, redis_instance
+from model.all_model import User, redis_instance
 
 
-def mobile_payload_validator(function):
+def details_payload_validator(function):
     def wrapper(*args, **kwargs):
         self = args[0]
         try:
@@ -42,27 +42,27 @@ def error_control(function):
     return wrapper
 
 
-def duplicate_user(function):
-    def wrapper(*args, **kwargs):
-        self = args[0]
-        self.session_user = redis_instance.get(self.session_id)
-        if self.session_user is None or len(self.session_user) == 0:
-            self.response = Response(json.dumps({"response": "invalid process"}), status=400,
-                                     mimetype="application/json")
-            # {reminder}report false signup attempt
-            return
-        else:
-            temp = User.objects(phone_number=self.phone_number)
-            if len(temp) == 1:
-                self.response = Response(json.dumps({"response": "phone number address exist"}), status=400,
-                                         mimetype="application/json")
-            elif len(temp) == 2:
-                pass
-                # {reminder} report duplicate data in DB
-            else:
-                function(self)
-
-    return wrapper
+# def duplicate_user(function):
+#     def wrapper(*args, **kwargs):
+#         self = args[0]
+#         self.session_user = redis_instance.get(self.session_id)
+#         if self.session_user is None or len(self.session_user) == 0:
+#             self.response = Response(json.dumps({"response": "invalid process"}), status=400,
+#                                      mimetype="application/json")
+#             # {reminder}report false signup attempt
+#             return
+#         else:
+#             temp = User.objects(phone_number=self.phone_number)
+#             if len(temp) == 1:
+#                 self.response = Response(json.dumps({"response": "phone number address exist"}), status=400,
+#                                          mimetype="application/json")
+#             elif len(temp) == 2:
+#                 pass
+#                 # {reminder} report duplicate data in DB
+#             else:
+#                 function(self)
+#
+#     return wrapper
 
 
 class CustomStringField(fields.String):
@@ -77,7 +77,10 @@ class CustomStringField(fields.String):
 
 class MobileRequestSchema(Schema):
     session_id = CustomStringField(required=True)
-    mobile_number = CustomStringField(required=True)
+    name = CustomStringField(required=True)
+    dob = CustomStringField(required=True)
+    gender = CustomStringField(required=True)
+    address = CustomStringField(required=True)
     # Todo: Do something about empty string
 
 
@@ -86,27 +89,19 @@ class MobileSubmit:
         self.session_user = None
         self.create_message = None
         self.payload = payload
-        self.phone_number = payload.get('mobile_number')
+        self.name = payload.get('name')
+        self.dob = payload.get('dob')
+        self.address = payload.get('address')
         self.session_id = payload.get('session_id')
         # self.otp = ''.join(random.choices(string.digits, k=4))
         self.otp = "1234"
         self.response = Response(json.dumps({"response": "Something went wrong"}), status=500,
                                  mimetype="application/json")
         self.engine()
-
     # @error_control
-    @mobile_payload_validator
+    @details_payload_validator
     # @duplicate_user
     def engine(self):
-        self.send_sms()
-        self.persist_phone_otp()
+        self.
 
-    def persist_phone_otp(self):
-        redis_instance.set(f"{self.phone_number}", f"{self.otp}")
-
-    def send_sms(self):
-        # client = plivo.RestClient(auth_id='MAZJNKOGM5ZDM0OTIWNW', auth_token='OGMwNGE3ZDE4NDczZjk3NzhmOTUzYzBmZTg5NWZl')
-        # self.create_message = client.messages.create(src="+916393363690", dst=f"{self.phone_number}",
-        #                                              text=f"Use {self.otp} for DealerDaddy signup")
-        self.response = Response(json.dumps({"response": "otp sent"}), status=200,
-                                 mimetype="application/json")
+    def

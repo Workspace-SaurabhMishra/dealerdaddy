@@ -1,0 +1,2 @@
+signin_up => 0
+token => 1

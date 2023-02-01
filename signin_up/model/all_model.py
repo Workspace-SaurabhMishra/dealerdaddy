@@ -52,14 +52,15 @@ class ActivityOptions(Enum):
 
 class User(Document):
     user_id = StringField(required=True)
-    username = StringField(required=False, max_length=30)
+    # username = StringField(required=False, max_length=30)
     password = StringField(required=False, max_length=100, min_length=8,
                            regex="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$")
-    name = StringField(required=False, max_length=30)
+    name = StringField(required=False, max_length=50)
     gender = EnumField(required=False, enum=Gender, default=Gender.other)
-    dob = DateField(required=False)
+    dob = StringField(required=False)
     phone_number = StringField(required=False, max_length=13)
     email = EmailField(required=False)
+    address = StringField(required=False, max_length=200)
     kyc_id = StringField(required=False)
     kyc_status = BooleanField(required=False, default=False)
     user_timestamp = DateTimeField(required=True)

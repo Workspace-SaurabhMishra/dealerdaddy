@@ -5,7 +5,7 @@ import redis
 from flask import Response
 from marshmallow import fields, Schema, utils
 
-from model.all_model import User, redis_instance
+from signin_up.model.all_model import User, redis_instance
 
 
 def mobile_verification_validator(function):
@@ -40,7 +40,7 @@ def duplicate_user(function):
     def wrapper(*args, **kwargs):
         self = args[0]
         self.session_user = redis_instance.get(self.session_id)
-        if len(self.session_user) == 0:
+        if self.session_user is None or len(self.session_user) == 0:
             self.response = Response(json.dumps({"response": "invalid process"}), status=400,
                                      mimetype="application/json")
             # {reminder}report false signup attempt
@@ -48,7 +48,7 @@ def duplicate_user(function):
         else:
             temp = User.objects(phone_number=self.phone_number)
             if len(temp) == 1:
-                self.response = Response(json.dumps({"response": "phone number address exist"}), status=400,
+                self.response = Response(json.dumps({"response": "phone number already exist"}), status=400,
                                          mimetype="application/json")
             elif len(temp) == 2:
                 pass

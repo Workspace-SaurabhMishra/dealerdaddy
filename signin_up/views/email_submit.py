@@ -1,16 +1,13 @@
 import json
 import smtplib
-import random
-import string
 import typing
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-import redis
 from flask import Response
 from marshmallow import Schema, fields, validate, utils
 
-from model.all_model import User, redis_instance
+from signin_up.model.all_model import User, redis_instance
 
 
 def email_payload_validator(function):
@@ -83,25 +80,26 @@ class EmailRequestSchema(Schema):
 
 
 class EmailSubmit:
-    def __init__(self, payload):
+    def __init__(self, request_payload):
         self.session_user = None
-        self.payload = payload
-        self.email = payload.get('email')
-        self.session_id = payload.get('session_id')
-        self.otp = ''.join(random.choices(string.digits, k=4))
+        self.payload = request_payload
+        self.email = request_payload.get('email')
+        self.session_id = request_payload.get('session_id')
+        # self.otp = ''.join(random.choices(string.digits, k=4))
+        self.otp = '1234'
         self.response = Response(json.dumps({"response": "Something went wrong"}), status=500,
                                  mimetype="application/json")
         self.engine()
 
     @error_control
     @email_payload_validator
-    @duplicate_user
+    # @duplicate_user
     def engine(self):
         self.send_email()
         self.persist_email_otp()
 
     def persist_email_otp(self):
-        redis_instance.set(f"{self.email}", f"{self.otp}")
+        redis_instance.setex(f"{self.email}", 86400, f"{self.otp}")
 
     def send_email(self):
         sender_email = "contact@dealerdaddy.in"
